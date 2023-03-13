@@ -1,0 +1,16 @@
+﻿{
+  "Xmins": [0.0],
+  "Xmaxs": [1.0],
+  "Ymins": [0.1],
+  "Ymaxs": [1.1],
+  "CurrentDensitys": [0.0],
+  "MagneticPermeabilitys": [1.0],
+  "Xs": [0.0,1.0],
+  "XSteps": [1.0],
+  "XRelaxRatios": [1.1],
+  "IsReversedXRelaxRatio": [false],
+  "Ys": [0.1,1.1],
+  "YSteps": [1.0],
+  "YRelaxRatios": [1.1],
+  "IsReversedYRelaxRatio": [true]
+}
