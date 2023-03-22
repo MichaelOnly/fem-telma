@@ -86,12 +86,12 @@ public class SLAE
             boundaryPoints.Add(grid.Elements[yNumberSegments - 1 + i].ElementNumbers[3]);
         }
 
-        for (int i = yNumberSegments; i >= 0; i--)
+        for (int i = yNumberSegments - 1; i >= 0; i--)
         {
             boundaryPoints.Add(grid.Elements[i * xNumberSegments + xNumberSegments - 1].ElementNumbers[2]);
         }
 
-        var bigDouble = 1e30;
+        var bigDouble = 1e20;
         foreach (var boundaryPoint in boundaryPoints)
         {
             M.DiagonalElements[boundaryPoint] = bigDouble;
@@ -99,10 +99,10 @@ public class SLAE
         }
     }
 
-    public double[] LUForwardProp(Matrix mx)
+    private double[] LUForwardProp(Matrix mx, double[] rhsVector)
     {
-        var result = new double[RHSVector.Length];
-        RHSVector.AsSpan().CopyTo(result);
+        var result = new double[rhsVector.Length];
+        rhsVector.AsSpan().CopyTo(result);
         for (var i = 0; i < result.Length; i++)
         {
             var sum = 0.0;
@@ -115,10 +115,10 @@ public class SLAE
         return result;
     }
 
-    public double[] LUBackwardProp(Matrix mx)
+    private double[] LUBackwardProp(Matrix mx, double[] rhsVector)
     {
-        var result = new double[RHSVector.Length];
-        RHSVector.AsSpan().CopyTo(result);
+        var result = new double[rhsVector.Length];
+        rhsVector.AsSpan().CopyTo(result);
         for (var i = mx.Size - 1; i >= 0; i--)
         {
             result[i] /= mx.DiagonalElements[i];
@@ -129,12 +129,52 @@ public class SLAE
         return result;
     }
 
-    public double ScalarProd(double[] x, double[] y)
+    private double ScalarProd(double[] x, double[] y)
     {
         var result = 0.0;
         for (var i = 0; i < x.Length; i++)
             result += x[i] * y[i];
 
         return result;
+    }
+
+    public void SolveWithLOSPrecond(double eps, int maxIter)
+    {
+        var factorizedM = M.LUsqFactorization();
+        var k = 0;
+        var buf = M.MultMatrixOnVector(Result);
+        for (var i = 0; i < buf.Length; i++)
+            buf[i] = RHSVector[i] - buf[i];
+        var r = LUForwardProp(factorizedM, buf);
+        var error = ScalarProd(r, r);
+        var error1 = error + 1;
+        var z = LUBackwardProp(factorizedM, r);
+        buf = M.MultMatrixOnVector(z);
+        var p = LUForwardProp(factorizedM, buf);
+        while (error > eps && k < maxIter && Math.Abs(error - error1) >= eps)
+        {
+            var pp = ScalarProd(p, p);
+            var pr = ScalarProd(p, r);
+            var alpha = pr / pp;
+            error1 = error;
+            error -= alpha * alpha * pp;
+            for (var i = 0; i < M.Size; i++)
+            {
+                Result[i] += alpha * z[i];
+                r[i] -= alpha * p[i];
+            }
+
+            var Ur = LUBackwardProp(factorizedM, r);
+            buf = M.MultMatrixOnVector(Ur);
+            buf = LUForwardProp(factorizedM, buf);
+            var betta = -(ScalarProd(p, buf) / pp);
+            for (var i = 0; i < M.Size; i++)
+            {
+                z[i] = Ur[i] + betta * z[i];
+                p[i] = buf[i] + betta * p[i];
+            }
+            k++;
+        }
+        Console.WriteLine("iter: " + k.ToString()+" Error: "+ error.ToString());
     }
 }

@@ -9,6 +9,8 @@ public class Grid
     public readonly List<int>[] PointsBounds;
     public readonly int XNumberOfSegments;
     public readonly int YNumberOfSegments;
+    public readonly float[] XGrid;
+    public readonly float[] YGrid;
 
     private static List<float> Make1DGrid(float[] points, float[] steps, float[] relaxRatios,
         bool[] isReversedRelaxRatio)
@@ -36,12 +38,10 @@ public class Grid
                     x += step * (float)Math.Pow(relaxRatio, numberSegments);
                     numberSegments++;
                 }
-
                 if (isReversedRelaxRatio[i])
                 {
                     relaxRatio = 1 / relaxRatio;
                 }
-
                 step = (points[i + 1] - points[i]) /
                        ((1 - (float)Math.Pow(relaxRatio, numberSegments)) / (1 - relaxRatio));
                 for (var j = 1; j < numberSegments; j++)
@@ -58,6 +58,8 @@ public class Grid
     {
         var xGrid = Make1DGrid(areas.Xs, areas.XSteps, areas.XRelaxRatios, areas.IsReversedXRelaxRatio).ToArray();
         var yGrid = Make1DGrid(areas.Ys, areas.YSteps, areas.YRelaxRatios, areas.IsReversedYRelaxRatio).ToArray();
+        XGrid = xGrid;
+        YGrid = yGrid;
         var xNumberPoints = xGrid.Length;
         var xNumberSegments = xNumberPoints - 1;
         var yNumberPoints = yGrid.Length;
@@ -97,7 +99,7 @@ public class Grid
             var ymax = Points[element.ElementNumbers[2]].Y;
             for (var j = 0; j < areas.Xmins.Length; j++)
             {
-                if (xmin > areas.Xmins[j] && xmax < areas.Xmaxs[j] && ymin > areas.Ymins[j] && ymax < areas.Ymaxs[j])
+                if (xmin >= areas.Xmins[j] && xmax <= areas.Xmaxs[j] && ymin >= areas.Ymins[j] && ymax <= areas.Ymaxs[j])
                 {
                     element.CurrentDensity = areas.CurrentDensitys[j];
                     element.MagneticPermeability = areas.MagneticPermeabilitys[j];
@@ -106,6 +108,10 @@ public class Grid
         }
 
         PointsBounds = new List<int>[xNumberPoints * yNumberPoints];
+        for (var i = 0; i < PointsBounds.Length; i++)
+        {
+            PointsBounds[i] = new List<int>();
+        }
         foreach (var element in Elements)
         {
             for (var i = 0; i < 4; i++)

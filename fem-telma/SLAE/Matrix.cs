@@ -16,13 +16,13 @@ public class Matrix
         Ia = new int[Size + 1];
         Ia[0] = 0;
         Ia[1] = 0;
-        for (var i = 1; i < Size + 1; i++)
+        for (var i = 1; i < Size; i++)
         {
             Ia[i + 1] = Ia[i] + grid.PointsBounds[i].Count;
         }
 
         Ja = new int[Ia.Last()];
-        for (var i = 1; i < Size + 1; i++)
+        for (var i = 1; i < Size; i++)
         {
             var stringSize = Ia[i + 1] - Ia[i];
             for (var j = 0; j < stringSize; j++)
@@ -34,14 +34,19 @@ public class Matrix
         UpperTriangleElements = new double[Ia.Last()];
     }
 
-    public Matrix()
+    private Matrix(int size, int[] ia, int[] ja, double[] au, double[] al, double[] di)
     {
-        Size = 1;
-        DiagonalElements = new double[Size];
-        Ia = new int[Size + 1];
-        Ja = new int[Size];
-        LowTriangleElements = new double[Size];
-        UpperTriangleElements = new double[Size];
+        Size = size;
+        DiagonalElements = new double[di.Length];
+        Ia = new int[ia.Length];
+        Ja = new int[ja.Length];
+        UpperTriangleElements = new double[au.Length];
+        LowTriangleElements = new double[al.Length];
+        di.AsSpan().CopyTo(DiagonalElements);
+        ia.AsSpan().CopyTo(Ia);
+        ja.AsSpan().CopyTo(Ja);
+        au.AsSpan().CopyTo(UpperTriangleElements);
+        al.AsSpan().CopyTo(LowTriangleElements);
     }
 
     public double[] MultMatrixOnVector(double[] vec)
@@ -59,21 +64,10 @@ public class Matrix
 
         return result;
     }
-
-    private Matrix CopyMatrix()
-    {
-        var mxCopy = new Matrix();
-        Ia.AsSpan().CopyTo(mxCopy.Ia);
-        mxCopy.Size = Size;
-        Ja.AsSpan().CopyTo(mxCopy.Ja);
-        DiagonalElements.AsSpan().CopyTo(mxCopy.DiagonalElements);
-        LowTriangleElements.AsSpan().CopyTo(mxCopy.LowTriangleElements);
-        UpperTriangleElements.AsSpan().CopyTo(mxCopy.UpperTriangleElements);
-        return mxCopy;
-    }
+    
     public Matrix LUsqFactorization()
     {
-        var factorizedMx = CopyMatrix();
+        var factorizedMx = new Matrix(Size,Ia,Ja,UpperTriangleElements,LowTriangleElements,DiagonalElements);
         for (var i = 0; i < factorizedMx.Size; i++)
         {
             var sumdi = 0.0;
