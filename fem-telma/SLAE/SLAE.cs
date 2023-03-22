@@ -47,7 +47,7 @@ public class SLAE
                 }
             }
 
-            var currentDensity = element.CurrentDensity; 
+            var currentDensity = element.CurrentDensity;
             for (var i = 0; i < 4; i++)
             {
                 M.DiagonalElements[element.ElementNumbers[i]] += locG[i, i];
@@ -63,10 +63,11 @@ public class SLAE
                         M.Ia[element.ElementNumbers[i] + 1] -
                         M.Ia[element.ElementNumbers[i]]);
                     M.LowTriangleElements[indexOfElement] += locG[i, j];
-                    M.UpTriangleElements[indexOfElement] += locG[i, j];
+                    M.UpperTriangleElements[indexOfElement] += locG[i, j];
                 }
             }
         }
+
         ApplyBoundary(grid);
     }
 
@@ -77,16 +78,17 @@ public class SLAE
         var boundaryPoints = new List<int> { grid.Elements[0].ElementNumbers[0] };
         for (var i = 0; i < yNumberSegments; i++)
         {
-            boundaryPoints.Add(grid.Elements[i*xNumberSegments].ElementNumbers[2]);
+            boundaryPoints.Add(grid.Elements[i * xNumberSegments].ElementNumbers[2]);
         }
 
         for (var i = 0; i < xNumberSegments; i++)
         {
             boundaryPoints.Add(grid.Elements[yNumberSegments - 1 + i].ElementNumbers[3]);
         }
-        for (int i = yNumberSegments; i >=0; i--)
+
+        for (int i = yNumberSegments; i >= 0; i--)
         {
-            boundaryPoints.Add(grid.Elements[i*xNumberSegments + xNumberSegments - 1].ElementNumbers[2]);
+            boundaryPoints.Add(grid.Elements[i * xNumberSegments + xNumberSegments - 1].ElementNumbers[2]);
         }
 
         var bigDouble = 1e30;
@@ -95,5 +97,44 @@ public class SLAE
             M.DiagonalElements[boundaryPoint] = bigDouble;
             RHSVector[boundaryPoint] = 0.0;
         }
+    }
+
+    public double[] LUForwardProp(Matrix mx)
+    {
+        var result = new double[RHSVector.Length];
+        RHSVector.AsSpan().CopyTo(result);
+        for (var i = 0; i < result.Length; i++)
+        {
+            var sum = 0.0;
+            for (var j = mx.Ia[i]; j < mx.Ia[i + 1]; j++)
+                sum += mx.LowTriangleElements[j] * result[mx.Ja[j]];
+            result[i] -= sum;
+            result[i] /= mx.DiagonalElements[i];
+        }
+
+        return result;
+    }
+
+    public double[] LUBackwardProp(Matrix mx)
+    {
+        var result = new double[RHSVector.Length];
+        RHSVector.AsSpan().CopyTo(result);
+        for (var i = mx.Size - 1; i >= 0; i--)
+        {
+            result[i] /= mx.DiagonalElements[i];
+            for (var j = mx.Ia[i]; j < mx.Ia[i + 1]; j++)
+                result[mx.Ja[j]] -= mx.UpperTriangleElements[j] * result[i];
+        }
+
+        return result;
+    }
+
+    public double ScalarProd(double[] x, double[] y)
+    {
+        var result = 0.0;
+        for (var i = 0; i < x.Length; i++)
+            result += x[i] * y[i];
+
+        return result;
     }
 }
