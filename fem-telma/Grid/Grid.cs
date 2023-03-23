@@ -38,10 +38,12 @@ public class Grid
                     x += step * (float)Math.Pow(relaxRatio, numberSegments);
                     numberSegments++;
                 }
+
                 if (isReversedRelaxRatio[i])
                 {
                     relaxRatio = 1 / relaxRatio;
                 }
+
                 step = (points[i + 1] - points[i]) /
                        ((1 - (float)Math.Pow(relaxRatio, numberSegments)) / (1 - relaxRatio));
                 for (var j = 1; j <= numberSegments; j++)
@@ -97,9 +99,12 @@ public class Grid
             var xmax = Points[element.ElementNumbers[1]].X;
             var ymin = Points[element.ElementNumbers[0]].Y;
             var ymax = Points[element.ElementNumbers[2]].Y;
+            var xcenter = (xmax + xmin) / 2;
+            var ycenter = (ymax + ymin) / 2;
             for (var j = 0; j < areas.Xmins.Length; j++)
             {
-                if (xmin >= areas.Xmins[j] && xmax <= areas.Xmaxs[j] && ymin >= areas.Ymins[j] && ymax <= areas.Ymaxs[j])
+                if (xcenter >= areas.Xmins[j] && xcenter <= areas.Xmaxs[j] && ycenter >= areas.Ymins[j] &&
+                    ycenter <= areas.Ymaxs[j])
                 {
                     element.CurrentDensity = areas.CurrentDensitys[j];
                     element.MagneticPermeability = areas.MagneticPermeabilitys[j];
@@ -112,6 +117,7 @@ public class Grid
         {
             PointsBounds[i] = new List<int>();
         }
+
         foreach (var element in Elements)
         {
             for (var i = 0; i < 4; i++)
