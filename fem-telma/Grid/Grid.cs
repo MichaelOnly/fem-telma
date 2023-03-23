@@ -44,7 +44,7 @@ public class Grid
                 }
                 step = (points[i + 1] - points[i]) /
                        ((1 - (float)Math.Pow(relaxRatio, numberSegments)) / (1 - relaxRatio));
-                for (var j = 1; j < numberSegments; j++)
+                for (var j = 1; j <= numberSegments; j++)
                 {
                     grid.Add(points[i] + step * ((1 - (float)Math.Pow(relaxRatio, j)) / (1 - relaxRatio)));
                 }
