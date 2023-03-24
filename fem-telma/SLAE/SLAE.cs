@@ -53,22 +53,29 @@ public class SLAE
                 M.DiagonalElements[element.ElementNumbers[i]] += locG[i, i];
                 RHSVector[element.ElementNumbers[i]] += hx * hy * currentDensity / 4.0;
             }
-
+            
             for (var i = 1; i < 4; i++)
             {
                 for (var j = 0; j < i; j++)
                 {
-                    var indexOfElement = Array.IndexOf(M.Ja, element.ElementNumbers[j],
-                        M.Ia[element.ElementNumbers[i]],
-                        M.Ia[element.ElementNumbers[i] + 1] -
-                        M.Ia[element.ElementNumbers[i]]);
+                    var indexOfElement = GetIndex(element.ElementNumbers[i], element.ElementNumbers[j]);
                     M.LowTriangleElements[indexOfElement] += locG[i, j];
-                    M.UpperTriangleElements[indexOfElement] += locG[i, j];
+                    M.UpperTriangleElements[indexOfElement] += locG[j, i];
                 }
             }
         }
-
         ApplyBoundary(grid);
+    }
+
+    private int GetIndex(int i, int j)
+    {
+        var index = M.Ia[i];
+        while (M.Ja[index] != j)
+        {
+            index++;
+        }
+
+        return index;
     }
 
     private void ApplyBoundary(Grid.Grid grid)
@@ -91,7 +98,7 @@ public class SLAE
             boundaryPoints.Add(grid.Elements[i * xNumberSegments + xNumberSegments - 1].ElementNumbers[1]);
         }
 
-        var bigDouble = 1e20;
+        var bigDouble = 1e30;
         foreach (var boundaryPoint in boundaryPoints)
         {
             M.DiagonalElements[boundaryPoint] = bigDouble;
