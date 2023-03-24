@@ -9,7 +9,8 @@ public class ResultFunction
 
     public ResultFunction(double[] weights, Grid.Grid grid)
     {
-        weights.AsSpan().CopyTo(weights);
+        Weights = new double[weights.Length];
+        weights.AsSpan().CopyTo(Weights);
         Grid = grid;
     }
 
@@ -17,12 +18,12 @@ public class ResultFunction
     {
         var xNumberElement = 0;
         var yNumberElement = 0;
-        while (!(Grid.XGrid[xNumberElement] <= x && x <= Grid.XGrid[xNumberElement]))
+        while (!(Grid.XGrid[xNumberElement] <= x && x <= Grid.XGrid[xNumberElement+1]))
         {
             xNumberElement++;
         }
 
-        while (!(Grid.YGrid[yNumberElement] <= y && y <= Grid.YGrid[yNumberElement]))
+        while (!(Grid.YGrid[yNumberElement] <= y && y <= Grid.YGrid[yNumberElement+1]))
         {
             yNumberElement++;
         }

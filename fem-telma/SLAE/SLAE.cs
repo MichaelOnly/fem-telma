@@ -54,7 +54,7 @@ public class SLAE
                 RHSVector[element.ElementNumbers[i]] += hx * hy * currentDensity / 4.0;
             }
 
-            for (var i = 0; i < 4; i++)
+            for (var i = 1; i < 4; i++)
             {
                 for (var j = 0; j < i; j++)
                 {
@@ -83,12 +83,12 @@ public class SLAE
 
         for (var i = 0; i < xNumberSegments; i++)
         {
-            boundaryPoints.Add(grid.Elements[yNumberSegments - 1 + i].ElementNumbers[3]);
+            boundaryPoints.Add(grid.Elements[(yNumberSegments - 1)*xNumberSegments + i].ElementNumbers[3]);
         }
 
         for (int i = yNumberSegments - 1; i >= 0; i--)
         {
-            boundaryPoints.Add(grid.Elements[i * xNumberSegments + xNumberSegments - 1].ElementNumbers[2]);
+            boundaryPoints.Add(grid.Elements[i * xNumberSegments + xNumberSegments - 1].ElementNumbers[1]);
         }
 
         var bigDouble = 1e20;
@@ -151,13 +151,14 @@ public class SLAE
         var z = LUBackwardProp(factorizedM, r);
         buf = M.MultMatrixOnVector(z);
         var p = LUForwardProp(factorizedM, buf);
-        while (error > eps && k < maxIter && Math.Abs(error - error1) >= eps)
+        while (error > eps && k < maxIter && Math.Abs(error - error1) > eps)
         {
             var pp = ScalarProd(p, p);
             var pr = ScalarProd(p, r);
             var alpha = pr / pp;
             error1 = error;
             error -= alpha * alpha * pp;
+            error = Math.Abs(error);
             for (var i = 0; i < M.Size; i++)
             {
                 Result[i] += alpha * z[i];
