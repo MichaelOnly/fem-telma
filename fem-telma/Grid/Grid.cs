@@ -23,6 +23,11 @@ public class Grid
             if (Double.Abs(relaxRatio - 1.0) < 1e-14)
             {
                 var numberSegments = (int)((points[i + 1] - points[i]) / step);
+                if (numberSegments == 0)
+                {
+                    numberSegments++;
+                }
+
                 step = (points[i + 1] - points[i]) / numberSegments;
                 for (var j = 1; j < numberSegments + 1; j++)
                 {
@@ -107,7 +112,7 @@ public class Grid
                     ycenter <= areas.Ymaxs[j])
                 {
                     element.CurrentDensity = areas.CurrentDensitys[j];
-                    element.MagneticPermeability = areas.MagneticPermeabilitys[j];
+                    element.MagneticPermeability = areas.MagneticPermeabilitys[j] * 4 * Math.PI * 1e-7;
                 }
             }
         }

@@ -87,7 +87,6 @@ public class SLAE
         {
             boundaryPoints.Add(grid.Elements[i * xNumberSegments].ElementNumbers[2]);
         }
-
         for (var i = 0; i < xNumberSegments; i++)
         {
             boundaryPoints.Add(grid.Elements[(yNumberSegments - 1)*xNumberSegments + i].ElementNumbers[3]);
@@ -154,7 +153,7 @@ public class SLAE
             buf[i] = RHSVector[i] - buf[i];
         var r = LUForwardProp(factorizedM, buf);
         var error = ScalarProd(r, r);
-        var error1 = error + 1;
+        var error1 = 3*error / 2;
         var z = LUBackwardProp(factorizedM, r);
         buf = M.MultMatrixOnVector(z);
         var p = LUForwardProp(factorizedM, buf);

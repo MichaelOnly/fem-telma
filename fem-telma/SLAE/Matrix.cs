@@ -78,7 +78,6 @@ public class Matrix
             {
                 var j = factorizedMx.Ja[k];
                 var j0 = factorizedMx.Ia[j];
-                var j1 = factorizedMx.Ia[j + 1];
 
                 var ik = i0;
                 var kj = j0;

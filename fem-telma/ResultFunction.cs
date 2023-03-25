@@ -49,4 +49,14 @@ public class ResultFunction
                      Weights[Grid.Elements[elementNumber].ElementNumbers[3]] * fourthFunc;
         return result;
     }
+
+    public double GetAbsB(double x, double y)
+    {
+        var deltax = 1e-12;
+        var deltay = 1e-12;
+        var deltaAx = (GerResultFunction(x + deltax, y) - GerResultFunction(x, y)) / deltax;
+        var deltaAy = (GerResultFunction(x, y + deltax) - GerResultFunction(x, y)) / deltay;
+        var absB = Math.Sqrt(deltaAx * deltaAx + deltaAy * deltaAy);
+        return absB;
+    }
 }

@@ -8,7 +8,7 @@
         <Nullable>enable</Nullable>
     </PropertyGroup>
     <ItemGroup>
-        <None Update="areas.json" CopyToOutputDirectory="Always"/>
-        <None Update="points.json" CopyToOutputDirectory="Always"/>
+        <None Update="areas.json" CopyToOutputDirectory="Always" />
+        <None Update="points.json" CopyToOutputDirectory="Always" />
     </ItemGroup>
 </Project>
