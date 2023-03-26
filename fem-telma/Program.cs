@@ -10,6 +10,7 @@ var grid = new Grid(area);
 var muSpline = new MuSpline();
 var SLAE = new SLAE(grid);
 SLAE.SolveWithLOSPrecond(1e-15,1000);
+//SLAE.SolveWithSimpleIteration(grid, 1e-15,500, 0.2);
 var resFunc = new ResultFunction(SLAE.Result,grid);
 for (var i = 0; i < points.Xs.Length; i++)
 {

@@ -26,8 +26,13 @@ public class MuSpline
             return (_BTable[^1] * (1.0 / _muTable[^1] - 1.0) / b + 1.0) / (4 * Math.PI * 1e-7);
         }
 
+        if (b <= _BTable[0])
+        {
+            return 1.0 / (_muTable[0] * 4 * Math.PI * 1e-7);
+        }
+
         var numberSegment = 0;
-        while (b >= _BTable[numberSegment] && b <= _BTable[numberSegment + 1])
+        while (!(b >= _BTable[numberSegment] && b <= _BTable[numberSegment + 1]))
         {
             numberSegment++;
         }

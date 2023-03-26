@@ -53,7 +53,7 @@ public class SLAE
                 M.DiagonalElements[element.ElementNumbers[i]] += locG[i, i];
                 RHSVector[element.ElementNumbers[i]] += hx * hy * currentDensity / 4.0;
             }
-            
+
             for (var i = 1; i < 4; i++)
             {
                 for (var j = 0; j < i; j++)
@@ -64,6 +64,83 @@ public class SLAE
                 }
             }
         }
+
+        ApplyBoundary(grid);
+    }
+
+    private void RebuildSLAE(Grid.Grid grid, ResultFunction resFunc)
+    {
+        M = new Matrix(grid);
+        RHSVector = new double[M.Size];
+        Result = new double[M.Size];
+        var g = new[,]
+        {
+            { 1.0, -1.0 },
+            { -1.0, 1.0 }
+        };
+        var m = new[,]
+        {
+            { 1.0 / 3.0, 1.0 / 6.0 },
+            { 1.0 / 6.0, 1.0 / 3.0 }
+        };
+        var locG = new double[4, 4];
+        var muSpline = new MuSpline();
+        foreach (var element in grid.Elements)
+        {
+            double hx = grid.Points[element.ElementNumbers[1]].X -
+                        grid.Points[element.ElementNumbers[0]].X;
+            double hy = grid.Points[element.ElementNumbers[2]].Y -
+                        grid.Points[element.ElementNumbers[0]].Y;
+            var locLambda = 1.0 / element.MagneticPermeability;
+            if (Math.Abs(element.MagneticPermeability - 1000 * 4 * Math.PI * 1e-7) < 1e-14)
+            {
+                var lambda0 = muSpline.GetMu(resFunc.GetAbsB(grid.Points[element.ElementNumbers[0]].X,
+                    grid.Points[element.ElementNumbers[0]].Y));
+                var lambda1 = muSpline.GetMu(resFunc.GetAbsB(grid.Points[element.ElementNumbers[1]].X,
+                    grid.Points[element.ElementNumbers[1]].Y));
+                var lambda2 = muSpline.GetMu(resFunc.GetAbsB(grid.Points[element.ElementNumbers[2]].X,
+                    grid.Points[element.ElementNumbers[2]].Y));
+                var lambda3 = muSpline.GetMu(resFunc.GetAbsB(grid.Points[element.ElementNumbers[3]].X,
+                    grid.Points[element.ElementNumbers[3]].Y));
+                locLambda = (lambda0 + lambda1 + lambda2 + lambda3) / 4.0;
+            }
+
+            locG[0, 0] = locLambda * (hy * g[0, 0] * m[0, 0] / hx + hx * g[0, 0] * m[0, 0] / hy);
+            locG[0, 1] = locLambda * (hy * g[0, 1] * m[0, 0] / hx + hx * g[0, 0] * m[0, 1] / hy);
+            locG[0, 2] = locLambda * (hy * g[0, 0] * m[0, 1] / hx + hx * g[0, 1] * m[0, 0] / hy);
+            locG[0, 3] = locLambda * (hy * g[0, 1] * m[0, 1] / hx + hx * g[0, 1] * m[0, 1] / hy);
+            locG[1, 1] = locLambda * (hy * g[1, 1] * m[0, 0] / hx + hx * g[0, 0] * m[1, 1] / hy);
+            locG[1, 2] = locLambda * (hy * g[1, 0] * m[0, 1] / hx + hx * g[0, 1] * m[1, 0] / hy);
+            locG[1, 3] = locLambda * (hy * g[1, 1] * m[0, 1] / hx + hx * g[0, 1] * m[1, 1] / hy);
+            locG[2, 2] = locLambda * (hy * g[0, 0] * m[1, 1] / hx + hx * g[1, 1] * m[0, 0] / hy);
+            locG[2, 3] = locLambda * (hy * g[0, 1] * m[1, 1] / hx + hx * g[1, 1] * m[0, 1] / hy);
+            locG[3, 3] = locLambda * (hy * g[1, 1] * m[1, 1] / hx + hx * g[1, 1] * m[1, 1] / hy);
+            for (var i = 0; i < 4; i++)
+            {
+                for (var j = i + 1; j < 4; j++)
+                {
+                    locG[j, i] = locG[i, j];
+                }
+            }
+
+            var currentDensity = element.CurrentDensity;
+            for (var i = 0; i < 4; i++)
+            {
+                M.DiagonalElements[element.ElementNumbers[i]] += locG[i, i];
+                RHSVector[element.ElementNumbers[i]] += hx * hy * currentDensity / 4.0;
+            }
+
+            for (var i = 1; i < 4; i++)
+            {
+                for (var j = 0; j < i; j++)
+                {
+                    var indexOfElement = GetIndex(element.ElementNumbers[i], element.ElementNumbers[j]);
+                    M.LowTriangleElements[indexOfElement] += locG[i, j];
+                    M.UpperTriangleElements[indexOfElement] += locG[j, i];
+                }
+            }
+        }
+
         ApplyBoundary(grid);
     }
 
@@ -87,9 +164,10 @@ public class SLAE
         {
             boundaryPoints.Add(grid.Elements[i * xNumberSegments].ElementNumbers[2]);
         }
+
         for (var i = 0; i < xNumberSegments; i++)
         {
-            boundaryPoints.Add(grid.Elements[(yNumberSegments - 1)*xNumberSegments + i].ElementNumbers[3]);
+            boundaryPoints.Add(grid.Elements[(yNumberSegments - 1) * xNumberSegments + i].ElementNumbers[3]);
         }
 
         for (int i = yNumberSegments - 1; i >= 0; i--)
@@ -135,7 +213,7 @@ public class SLAE
         return result;
     }
 
-    private double ScalarProd(double[] x, double[] y)
+    private static double ScalarProd(double[] x, double[] y)
     {
         var result = 0.0;
         for (var i = 0; i < x.Length; i++)
@@ -153,7 +231,7 @@ public class SLAE
             buf[i] = RHSVector[i] - buf[i];
         var r = LUForwardProp(factorizedM, buf);
         var error = ScalarProd(r, r);
-        var error1 = 3*error / 2;
+        var error1 = 3 * error / 2;
         var z = LUBackwardProp(factorizedM, r);
         buf = M.MultMatrixOnVector(z);
         var p = LUForwardProp(factorizedM, buf);
@@ -180,8 +258,53 @@ public class SLAE
                 z[i] = Ur[i] + betta * z[i];
                 p[i] = buf[i] + betta * p[i];
             }
+
             k++;
         }
-        Console.WriteLine("iter: " + k.ToString()+" Error: "+ error.ToString());
+
+        Console.WriteLine("iter: " + k.ToString() + " Error: " + error.ToString());
+    }
+
+    private double GetSLAEResidual(double[] weights)
+    {
+        var residualVec = M.MultMatrixOnVector(weights);
+        for (var i = 0; i < residualVec.Length; i++)
+        {
+            residualVec[i] = residualVec[i] - RHSVector[i];
+        }
+
+        var residual = Math.Sqrt(ScalarProd(residualVec, residualVec) / ScalarProd(RHSVector, RHSVector));
+        return residual;
+    }
+
+    public void SolveWithSimpleIteration(Grid.Grid grid, double eps, int maxIter, double relaxRatio)
+    {
+        var lastWeights = new double[Result.Length];
+        Result.AsSpan().CopyTo(lastWeights);
+        var resFunc = new ResultFunction(lastWeights, grid);
+        var relaxRatioStep = relaxRatio / maxIter;
+        RebuildSLAE(grid, resFunc);
+        var residual = GetSLAEResidual(lastWeights);
+        var residual1 = 3 * residual / 2;
+        var k = 0;
+        while (residual > eps && k < maxIter && Math.Abs(residual - residual1) > eps)
+        {
+            SolveWithLOSPrecond(eps, maxIter);
+            for (var i = 0; i < Result.Length; i++)
+            {
+                Result[i] = relaxRatio * Result[i] + (1 - relaxRatio) * lastWeights[i];
+            }
+
+            //relaxRatio -= relaxRatioStep;
+            Result.AsSpan().CopyTo(lastWeights);
+            resFunc = new ResultFunction(lastWeights, grid);
+            RebuildSLAE(grid, resFunc);
+            residual1 = residual;
+            residual = GetSLAEResidual(lastWeights);
+            k++;
+        }
+
+        lastWeights.AsSpan().CopyTo(Result);
+        Console.WriteLine("nonlinear iter: " + k + " residual: " + residual);
     }
 }
